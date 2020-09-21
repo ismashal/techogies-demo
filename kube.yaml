@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-deployment
+  namespace: devops-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops
+  template:
+    metadata:
+      labels:
+        app: devops
+    spec:
+      containers:
+        - name: devops
+          image: ${IMAGE_NAME}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+---
+# NodeJs Frontend App Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-svc
+  namespace: devops-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: devops
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# NodeJs Frontend Ingress Resource
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+  name: devops-ingress
+  namespace: devops-ns
+spec:
+  rules:
+  - host: "app.devops.com"
+    http:
+      paths:
+      - backend:
+          serviceName: devops-svc
+          servicePort: 8080
+        path: /
+
